@@ -1,1 +1,1 @@
-# Computational analysis of PETase Cutinases
+# Computational analysis of PET degrading Cutinases
