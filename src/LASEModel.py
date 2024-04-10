@@ -8,7 +8,44 @@ import torch
 from torch import nn, optim
 from pytorch_lightning import LightningModule
 
-from Utils import categorical_accuracy, CategoricalCrossEntropy
+
+# loss and metric fns 
+
+class CategoricalCrossEntropy(nn.modules.loss._Loss):
+    '''
+    Re-implementation of `tf.keras.losses.CategoricalCrossentropy`
+    in PyTorch.
+    '''
+    def __init__(self):
+        super().__init__()
+        self.crossentropy_loss = nn.NLLLoss()
+
+    def forward(self, input, target, sample_weights=None):
+        # ensure target and input in the correct shapes
+        cond1 = input.shape[2] != target.shape[1]
+        cond2 = input.shape[1] == target.shape[1]
+        if cond1 and cond2:
+            input = torch.swapaxes(input, 1, 2)
+        # make sample weights if not provided
+        if sample_weights == None:
+            sample_weights = torch.ones_like(target)
+        # convert to log probabilities
+        log_prs = torch.log(input)
+        logit_test = torch.multiply(
+            log_prs,
+            sample_weights.unsqueeze(1).repeat(1, log_prs.shape[1], 1)
+        )
+        loss = self.crossentropy_loss(logit_test, target)
+        return loss
+    
+def categorical_accuracy(input, target, sample_weights):
+    '''
+    Calculate categorical accuracy given sample_weights.
+    '''
+    y_pred_classes = torch.argmax(input, dim=-1)
+    correct = (y_pred_classes == target).float() * sample_weights
+    cat_acc = correct.sum() / sample_weights.sum()
+    return cat_acc
 
 
 # transformer modules
