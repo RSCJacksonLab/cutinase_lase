@@ -9,7 +9,9 @@ from scipy import spatial
 from sklearn.neighbors import NearestNeighbors
 
 
-def get_local_dirichlet_energy(rep_arr: ArrayLike, y: ArrayLike):
+def get_local_dirichlet_energy(rep_arr: ArrayLike,
+                               y: ArrayLike,
+                               k: int = None,):
     '''
     Get the normalised Dirichlet energy for each datapoint given the
     representation array and signals (y). 
@@ -21,6 +23,9 @@ def get_local_dirichlet_energy(rep_arr: ArrayLike, y: ArrayLike):
         Expects (n_seqs, rep_dim)
     y : ArrayLike
         Signals/fitness values of each sequence.
+    k : int, 
+        The number of neighbours. If `None`, k will be made equal to
+        the square root of the number of nodes in the graph. 
 
     Returns:
     --------
@@ -31,7 +36,10 @@ def get_local_dirichlet_energy(rep_arr: ArrayLike, y: ArrayLike):
     '''
     # Make kNN
     dist_arr = spatial.distance_matrix(rep_arr, rep_arr)
-    k = int(np.sqrt(len(rep_arr)))
+    
+    if k is None:
+        k = int(np.sqrt(len(rep_arr)))
+        
     knn_fn = NearestNeighbors(
         n_neighbors=k,
         metric="precomputed"
